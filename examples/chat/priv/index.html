@@ -1,90 +1,150 @@
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-      <title>ErlBus Chat</title>
-      <script src="/assets/jquery.js"></script>
-      <script type="text/javascript">
-        var websocket;
-        jQuery(document).ready(init);
 
-        function init() {
-          jQuery("#roomContainer").hide();  
-          jQuery("#alertContainer").hide();
-          jQuery("#connectButton").hide();
-          if(!("WebSocket" in window)){  
-            showAlert('<span style="color: red;">Your Web Browser doesn\'t support Websockets!</span>');
-          } else {
-            jQuery("#connectButton").show();
-          };
-        };
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  <title>ErlBus Chat</title>
+  <script src="/assets/jquery.js"></script>
+  <script type="text/javascript">
+    var websocket;
+    jQuery(document).ready(init);
 
-        function connect() {
-        wsHost = "ws://" + window.location.host + "/websocket";
-        websocket = new WebSocket(wsHost);
-        websocket.onopen = function(evt) { onOpen(evt) }; 
-        websocket.onclose = function(evt) { onClose(evt) }; 
-        websocket.onmessage = function(evt) { onMessage(evt) }; 
-        websocket.onerror = function(evt) { onError(evt) }; 
-      }; 
-
-      function onOpen(evt) { 
-        jQuery('#roomContainer').fadeIn('slow');
-      };  
-
-      function onClose(evt) { 
-        jQuery('#roomContainer').fadeOut('slow');
-        showAlert('<span style="color: red;">Websocket connection has been closed!</span>');
-      };  
-
-      function onMessage(evt) { 
-        showMessage(jQuery.parseJSON(evt.data));
-      };  
-
-      function onError(evt) {
-        showAlert('<span style="color: red;">ERROR: ' + evt.data+ '</span>');
+    function init() {
+      jQuery("#roomContainer").hide();
+      jQuery("#alertContainer").hide();
+      jQuery("#connectButton").hide();
+      if (!("WebSocket" in window)) {
+        showAlert('<span style="color: red;">Your Web Browser doesn\'t support Websockets!</span>');
+      } else {
+        jQuery("#connectButton").show();
       };
+    };
 
-      function sendMessage() {
-        if(websocket.readyState == websocket.OPEN){
-          var txt = jQuery("#textToSend").val();
-          websocket.send(txt);
-          jQuery("#textToSend").val("");
-        } else {
-           showAlert('<span style="color: red;">ERROR: websocket is not ready</span>');
-        };
+    function connect() {
+      var username = jQuery("#username").val();
+      wsHost = "ws://" + window.location.host + "/websocket/" + username;
+      websocket = new WebSocket(wsHost);
+      websocket.onopen = function (evt) { onOpen(evt) };
+      websocket.onclose = function (evt) { onClose(evt) };
+      websocket.onmessage = function (evt) { onMessage(evt) };
+      websocket.onerror = function (evt) { onError(evt) };
+    };
+
+    function onOpen(evt) {
+      jQuery('#username').hide();
+      jQuery('#connectButton').hide();
+      jQuery('#roomContainer').fadeIn('slow');
+    };
+
+    function onClose(evt) {
+      jQuery('#roomContainer').fadeOut('slow');
+      showAlert('');
+      window.alert('Enter Your Name First!')
+    };
+
+    function onMessage(evt) {
+      showMessage(jQuery.parseJSON(evt.data));
+    };
+
+    function onError(evt) {
+      showAlert('<span style="color: red;">ERROR: ' + evt.data + '</span>');
+    };
+
+    function sendMessage() {
+      if (websocket.readyState == websocket.OPEN) {
+        var txt = jQuery("#textToSend").val();
+        websocket.send(txt);
+        jQuery("#textToSend").val("");
+      } else {
+        showAlert('<span style="color: red;">ERROR: websocket is not ready</span>');
       };
+    };
 
-      function showMessage(data) {
-        jQuery('#chatContainer').append('<div>' + data.sender + ' -> ' + data.msg + '</div>');
-      };
+    function showMessage(data) {
+      const time = new Date($.now());
+      let times = time.getHours() + ":" + time.getMinutes();
+      jQuery('#chatContainer').append('<div>' + "[" + times+ "] " + data.sender + ' -> ' + data.msg + '</div>');
+    };
 
-      function showAlert(txt) {
-        jQuery("#alertContainer").html(txt);
-        jQuery("#alertContainer").show();
-      }
-      </script>
-      <style>
-        #chatContainer {
-          background-color:lightgray;
-          min-width: 300px;
-          min-height: 200px;
-        }
-      </style>
-  </head>
-  <body>
-    <div id="alertContainer"></div>
-    <input id="connectButton" type="button" value="Join the Chat Room!" onclick="connect();"/>
+    function showAlert(txt) {
+      jQuery("#alertContainer").html(txt);
+      jQuery("#alertContainer").show();
+    }
+  </script>
+  <style>
+    body,
+    html {
+      font-family: 'Roboto', sans-serif;
+      max-height: 100vh;
+      max-width: 100vw;
+      position: relative;
+      background: #D0F4EA;
+    }
 
-    <div id="roomContainer">
-      <div id="chatContainer"></div>
-      <form onsubmit="sendMessage(); return false;">
+    .title {
+      margin: 3rem;
+      color: #545F66;
+      font-size: 48px;
+    }
+
+    .title-container {
+      width: 100%;
+      text-align: center;
+    }
+
+    .input-container {
+      width: 100%;
+    }
+
+    #roomContainer {
+      margin: auto;
+      width: 50%;
+    }
+
+    #chatContainer {
+      text-align: left;
+      background-color: #E8Fcc2;
+      min-width: 300px;
+      min-height: 200px;
+      border-radius: 4px;
+      border: 1px solid #829399;
+    }
+
+    #username {
+      border-radius: 4px;
+    }
+
+    #textToSend {
+      width: 89%;
+    }
+
+    #submit-btn {
+      width: 10%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="alertContainer"></div>
+  <div class="title-container">
+    <h1 class="title">Erlang Chat</h1>
+    <input id="username" type="text" placeholder="Enter your name here ...">
+    <input id="connectButton" type="button" value="Join the Chat Room!" onclick="connect();" />
+  </div>
+
+  <div id="roomContainer">
+    <div id="chatContainer"></div>
+    <form onsubmit="sendMessage(); return false;">
+      <div class="input-container">
         <span>
-          <input id="textToSend" type="text" />
+          <input id="textToSend" type="text" placeholder="Enter your message here ..." />
         </span>
         <span>
-          <input type="submit" value="send"/> 
+          <input id="submit-btn" type="submit" value="send" />
         </span>
-      </form>
-    </div>
-  </body>
+      </div>
+    </form>
+  </div>
+</body>
+
 </html>
